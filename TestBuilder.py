@@ -11,9 +11,9 @@ from selenium.webdriver.firefox.firefox_profile import FirefoxProfile
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from ua_parser import user_agent_parser
-from HTMLParser import HTMLParser
-from TestConfig import TestSettings
-import unittest, platform, re, json, urllib2, socket, os
+from html.parser import HTMLParser
+from .TestConfig import TestSettings
+import unittest, platform, re, json, urllib.request, urllib.error, urllib.parse, socket, os
 import time
 
 class TestResults():
@@ -87,9 +87,9 @@ def getEnvironmentDetails(driver):
     try:
         session = driver.session_id
         url = "{0}://{1}:{2}/grid/api/testsession?session={3}".format(TestSettings.get('SeleniumHub', 'protocol'), TestSettings.get('SeleniumHub', 'host'), TestSettings.get('SeleniumHub', 'port'), session)
-        req = urllib2.Request(url)
+        req = urllib.request.Request(url)
         req.add_header("Content-Type", "application/json")
-        response = urllib2.urlopen(req)
+        response = urllib.request.urlopen(req)
         node = json.loads(response.read())
         response.close()
         ip = re.search('\/\/([^\:]+)\:', node.get('proxyId')).group(1)
@@ -153,7 +153,7 @@ def TestGenerator(app, screenshot_always=False):
                         while len(self.driver.get_log('performance')) > 0:
                             pass
                     # Launch appropriate command from the testCommands library
-                    self.assertEquals(testCommands[step["command"]](**step), True)
+                    self.assertEqual(testCommands[step["command"]](**step), True)
                 except:
                     break
             else:
@@ -226,7 +226,7 @@ class TestSuite(unittest.TestCase):
     @classmethod
     def tearDownClass(self):
         time.sleep(3)
-        for browser, driver in self.browsers.iteritems():
+        for browser, driver in list(self.browsers.items()):
             driver.quit()
 
     def check_title(self, **info):
@@ -235,8 +235,8 @@ class TestSuite(unittest.TestCase):
         self.wait_for_page_title(info["title_expected"])
         info["title_loaded"] = self.driver.title.encode('utf-8')
         try:
-            if info["assert"] == "equals": self.assertEquals(info["title_loaded"].lower(), info["title_expected"].lower())
-            else: self.assertRegexpMatches(info["title_loaded"].lower(), info["title_expected"].lower())
+            if info["assert"] == "equals": self.assertEqual(info["title_loaded"].lower(), info["title_expected"].lower())
+            else: self.assertRegex(info["title_loaded"].lower(), info["title_expected"].lower())
             
             self.test.TestFinish()
             info['status'] = "Passed"
@@ -509,7 +509,7 @@ class TestSuite(unittest.TestCase):
                         error = "Blank Page Loaded"
                     try:
                         self.assertTrue(len(error) < 1000) # Likely page loaded but page title wasn't caught in time
-                        self.assertRegexpMatches(error.lower(), r'[45]\d{2}\D|error|^blank') # Check for status codes or errors in the source
+                        self.assertRegex(error.lower(), r'[45]\d{2}\D|error|^blank') # Check for status codes or errors in the source
                         info['status'] = 'Failed'
                         info['error'] = error
                         self.test.TestResults(info)
@@ -523,7 +523,7 @@ class TestSuite(unittest.TestCase):
                 elif errornum == "1":
                     try:
                         heading = self.driver.find_element_by_tag_name('h1').get_attribute('innerHTML')
-                        self.assertRegexpMatches(heading, r'^Planned')
+                        self.assertRegex(heading, r'^Planned')
                         info['status'] = 'Warning'
                         info['error'] = error
                         self.test.TestResults(info)
