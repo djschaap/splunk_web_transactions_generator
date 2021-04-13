@@ -457,8 +457,8 @@ class TestSuite(unittest.TestCase):
             self.assertNotRegexpMatches(self.driver.current_url, r'apology|outage', 1)
             
             #  Check for errors in the page title
-            self.assertNotRegexpMatches(page_title, r'\D?[45]\d\d\D', 2)
-            self.assertNotRegexpMatches(page_title, r'problem|failed|not\savailable|error|denied', 3)
+            self.assertNotRegexpMatches(page_title, rb'\D?[45]\d\d\D', 2)
+            self.assertNotRegexpMatches(page_title, rb'problem|failed|not\savailable|error|denied', 3)
 
             #  Check for neterror class on body in Chrome
             if self.test.results['environment']['browser']['name'] in ["Chrome","ChromeIncognito"]:
@@ -482,7 +482,7 @@ class TestSuite(unittest.TestCase):
             try:
                 # Check for access denied errors
                 if 'page_title' in locals():
-                    self.assertNotRegexpMatches(page_title, r'40[13]\D')
+                    self.assertNotRegexpMatches(page_title, rb'40[13]\D')
                     self.assertNotIn('denied',page_title)
 
                 if access_error:
@@ -509,7 +509,7 @@ class TestSuite(unittest.TestCase):
                         error = "Blank Page Loaded"
                     try:
                         self.assertTrue(len(error) < 1000) # Likely page loaded but page title wasn't caught in time
-                        self.assertRegex(error.lower(), r'[45]\d{2}\D|error|^blank') # Check for status codes or errors in the source
+                        self.assertRegex(error.lower(), rb'[45]\d{2}\D|error|^blank') # Check for status codes or errors in the source
                         info['status'] = 'Failed'
                         info['error'] = error
                         self.test.TestResults(info)
@@ -523,7 +523,7 @@ class TestSuite(unittest.TestCase):
                 elif errornum == "1":
                     try:
                         heading = self.driver.find_element_by_tag_name('h1').get_attribute('innerHTML')
-                        self.assertRegex(heading, r'^Planned')
+                        self.assertRegex(heading, rb'^Planned')
                         info['status'] = 'Warning'
                         info['error'] = error
                         self.test.TestResults(info)
@@ -577,11 +577,11 @@ class TestSuite(unittest.TestCase):
             info['error'] = self.driver.find_element_by_id("errorLongContent").get_attribute("innerText")
             self.test.TestResults(info)
         #  Handle unknown exceptions
-        except:
+        except Exception as error:
             result = False
             self.test.TestFinish()
             info['status'] = 'Failed'
-            info['error'] = 'An unknown error occured: {0}'.format(page_title)
+            info['error'] = 'An unknown error occured: {0}: {1}'.format(page_title, error)
             self.test.TestResults(info)
             raise
         finally:
