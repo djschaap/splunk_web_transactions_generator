@@ -83,14 +83,14 @@ def strip_tags(html):
     return re.sub(r'\s+', ' ', error)
 
 
-def getEnvironmentDetails(driver):
+def getEnvironmentDetails(seleniumUrl, driver):
     # GET BROWSER INFO
     ua_string = driver.execute_script("return navigator.userAgent")
     ua = user_agent_parser.Parse(ua_string)
     # GET NODE INFO
     try:
         session = driver.session_id
-        url = "{0}://{1}:{2}/grid/api/testsession?session={3}".format(TestSettings.get('SeleniumHub', 'protocol'), TestSettings.get('SeleniumHub', 'host'), TestSettings.get('SeleniumHub', 'port'), session)
+        url = "{0}/grid/api/testsession?session={3}".format(seleniumUrl, session)
         req = urllib.request.Request(url)
         req.add_header("Content-Type", "application/json")
         response = urllib.request.urlopen(req)
@@ -130,8 +130,12 @@ def TestGenerator(app, screenshot_always=False):
     def applicationTest(self):
         
         if self.browsers.get(app.get('BROWSER')) == None:
-            self.browsers[app['BROWSER']] = launchBrowser(app['BROWSER'])
-            self.browser_details[app['BROWSER']] = getEnvironmentDetails(self.browsers[app['BROWSER']])
+            # Prefer local Selenium Hub URL over settings.conf
+            globalSeleniumUrl = "{0}://{1}:{2}".format(TestSettings.get('SeleniumHub', 'protocol'), TestSettings.get('SeleniumHub', 'host'), TestSettings.get('SeleniumHub', 'port'))
+            siteSeleniumUrl = app.get('SELENIUM_URL', "")
+            seleniumUrl = siteSeleniumUrl if len(siteSeleniumUrl) > 0 else globalSeleniumUrl
+            self.browsers[app['BROWSER']] = launchBrowser(seleniumUrl, app['BROWSER'])
+            self.browser_details[app['BROWSER']] = getEnvironmentDetails(seleniumUrl, self.browsers[app['BROWSER']])
         
         self.driver = self.browsers[app['BROWSER']]
 
@@ -175,9 +179,9 @@ def TestGenerator(app, screenshot_always=False):
         self.test.WriteResults()
     return applicationTest
 
-def launchBrowser(browser):
-    # Get Selenium Hub and Browser settings from settings.conf
-    hub = "{0}://{1}:{2}/wd/hub".format(TestSettings.get('SeleniumHub', 'protocol'), TestSettings.get('SeleniumHub', 'host'), TestSettings.get('SeleniumHub', 'port'))
+def launchBrowser(seleniumUrl, browser):
+    # Get Selenium Browser settings from settings.conf
+    hub = "{0}/wd/hub".format(seleniumUrl)
     sitelist = TestSettings.get("BrowserSettings", "sitelist")
 
     if browser in ["Chrome","ChromeIncognito"]:
