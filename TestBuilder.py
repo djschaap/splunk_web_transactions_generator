@@ -41,6 +41,10 @@ class TestResults():
             },
             "tests": []
         }
+        if app.get("ITEM_HOST", "") != "":
+            self.results['meta_host'] = app["ITEM_HOST"]
+        if app.get("ITEM_INDEX", "") != "":
+            self.results['meta_index'] = app["ITEM_INDEX"]
         self.results['environment'] = environment
         self.count = 0
     def TestStart(self):
